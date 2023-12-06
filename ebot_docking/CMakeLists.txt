@@ -54,8 +54,18 @@ install(
 )
 
 install(PROGRAMS
-	scripts/ebot_docking_boilerplate.py
+	scripts/ebot_docking_rack1.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
+
+install(PROGRAMS
+	scripts/ebot_docking_rack2.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+	scripts/ebot_docking_rack3.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 ament_package()

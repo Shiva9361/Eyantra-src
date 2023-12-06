@@ -1,0 +1,6 @@
+{
+  "package_name": "ebot_docking",
+  "non_idl_tuples": [
+    "/home/vishnu/colcon_ws/src/ebot_docking:srv/DockSw.srv"
+  ]
+}

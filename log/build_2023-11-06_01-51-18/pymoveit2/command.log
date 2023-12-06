@@ -1,0 +1,6 @@
+Invoking command in '/home/vishnu/colcon_ws/src/build/pymoveit2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/vishnu/colcon_ws/src/pymoveit2 -DCMAKE_INSTALL_PREFIX=/home/vishnu/colcon_ws/src/install/pymoveit2
+Invoked command in '/home/vishnu/colcon_ws/src/build/pymoveit2' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/vishnu/colcon_ws/src/pymoveit2 -DCMAKE_INSTALL_PREFIX=/home/vishnu/colcon_ws/src/install/pymoveit2
+Invoking command in '/home/vishnu/colcon_ws/src/build/pymoveit2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/vishnu/colcon_ws/src/build/pymoveit2 -- -j16 -l16
+Invoked command in '/home/vishnu/colcon_ws/src/build/pymoveit2' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/vishnu/colcon_ws/src/build/pymoveit2 -- -j16 -l16
+Invoking command in '/home/vishnu/colcon_ws/src/build/pymoveit2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/vishnu/colcon_ws/src/build/pymoveit2
+Invoked command in '/home/vishnu/colcon_ws/src/build/pymoveit2' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/vishnu/colcon_ws/src/build/pymoveit2

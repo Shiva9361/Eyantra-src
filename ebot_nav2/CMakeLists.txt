@@ -53,6 +53,12 @@ install(
 )
 
 install(PROGRAMS
+	scripts/nav2_cmd_task1c.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
+install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -1,0 +1,6 @@
+Invoking command in '/home/vishnu/colcon_ws/src/build/ur_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/vishnu/colcon_ws/src/ur_description -DCMAKE_INSTALL_PREFIX=/home/vishnu/colcon_ws/src/install/ur_description
+Invoked command in '/home/vishnu/colcon_ws/src/build/ur_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/vishnu/colcon_ws/src/ur_description -DCMAKE_INSTALL_PREFIX=/home/vishnu/colcon_ws/src/install/ur_description
+Invoking command in '/home/vishnu/colcon_ws/src/build/ur_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/vishnu/colcon_ws/src/build/ur_description -- -j16 -l16
+Invoked command in '/home/vishnu/colcon_ws/src/build/ur_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/vishnu/colcon_ws/src/build/ur_description -- -j16 -l16
+Invoking command in '/home/vishnu/colcon_ws/src/build/ur_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/vishnu/colcon_ws/src/build/ur_description
+Invoked command in '/home/vishnu/colcon_ws/src/build/ur_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/vishnu/colcon_ws/src/build/ur_description

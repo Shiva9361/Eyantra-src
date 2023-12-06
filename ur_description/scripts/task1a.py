@@ -18,8 +18,8 @@
 *****************************************************************************************
 '''
 
-# Team ID:          [ Team-ID ]
-# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:          [2098]
+# Author List:		[ D.Vishnu Aravind,S.Shivadarshan,Bhuvan D,Darun BS ]
 # Filename:		    task1a.py
 # Functions:
 #			        [ Comma separated list of functions in this file ]
@@ -42,10 +42,26 @@ from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import TransformStamped
 from scipy.spatial.transform import Rotation as R
 from sensor_msgs.msg import CompressedImage, Image
+import traceback
 
 
 ##################### FUNCTION DEFINITIONS #######################
 
+def quaternion_from_euler(roll, pitch, yaw):
+    cy = math.cos(yaw * 0.5)
+    sy = math.sin(yaw * 0.5)
+    cp = math.cos(pitch * 0.5)
+    sp = math.sin(pitch * 0.5)
+    cr = math.cos(roll * 0.5)
+    sr = math.sin(roll * 0.5)
+	
+    q = [0] * 4
+    q[3] = cy * cp * cr + sy * sp * sr
+    q[0] = cy * cp * sr - sy * sp * cr
+    q[1] = sy * cp * sr + cy * sp * cr
+    q[2] = sy * cp * cr - cy * sp * sr
+	
+    return q
 def calculate_rectangle_area(coordinates):
     '''
     Description:    Function to calculate area or detected aruco
@@ -59,11 +75,17 @@ def calculate_rectangle_area(coordinates):
     '''
 
     ############ Function VARIABLES ############
-
     # You can remove these variables after reading the instructions. These are just for sample.
-
-    area = None
-    width = None
+    x1= int(coordinates[0][0][0])
+    x2= int(coordinates[0][1][0])
+    x3= int(coordinates[0][2][0])
+    y1= int(coordinates[0][0][1])
+    y2= int(coordinates[0][1][1])
+    y3= int(coordinates[0][2][1])
+    length=((x2-x1)**2 + (y2-y1)**2)**0.5
+    width= ((x3-x2)**2 + (y3-y2)**2)**0.5
+    area = length * width
+    req=[area,length,width]
 
     ############ ADD YOUR CODE HERE ############
 
@@ -75,10 +97,10 @@ def calculate_rectangle_area(coordinates):
 
     ############################################
 
-    return area, width
+    return req
 
 
-def detect_aruco(image):
+def detect_aruco(image,buffer):
     '''
     Description:    Function to perform aruco detection and return each detail of aruco detected 
                     such as marker ID, distance, angle, width, center point location, etc.
@@ -119,7 +141,99 @@ def detect_aruco(image):
     distance_from_rgb_list = []
     angle_aruco_list = []
     width_aruco_list = []
-    ids = []
+    ids_list = []
+    tlist = []
+    
+    # Convert the input BGR image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Define the ArUco dictionary
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+
+    # Define detector parameters
+    aruco_params = cv2.aruco.DetectorParameters()
+    
+    detector = cv2.aruco.ArucoDetector(dictionary=aruco_dict,detectorParams=aruco_params)
+    # Detect ArUco markers in the image
+    corners, ids, _ = detector.detectMarkers(gray)
+    # Check if any markers were detected
+    rvecs=[]
+    tvecs=[]
+    fcorners=[]
+    fids = np.copy(ids)
+    if ids is not None:
+        for i in range(len(ids)):
+            
+            marker_corners = corners[i]
+            marker_id = ids[i][0]
+            # Calculate the area of the detected marker
+            a = calculate_rectangle_area(marker_corners)
+            area = a[0]
+            length =a[1]
+            width =a[2]
+            # Filter markers based on a threshold
+            if area > aruco_area_threshold:        
+                fcorners.append(corners[i])        
+                #markedImage = cv2.circle(markedImage,(c[0],c[1]),10,(0,0,0),1)
+                # Draw frame axes using pose estimation
+                rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners[i], size_of_aruco_m, cam_mat, dist_mat)
+                
+                
+                # Calculate the center point of the marker
+                x = marker_corners[0][0][0]+marker_corners[0][1][0]+marker_corners[0][2][0]+marker_corners[0][3][0]
+                x = x*.25
+                y = marker_corners[0][0][1]+marker_corners[0][1][1]+marker_corners[0][2][1]+marker_corners[0][3][1]
+                y = y*.25
+                c = (int(x),int(y))
+                
+                """buffer.append(rvec)
+                if len(buffer[i])>10:
+                    buffer.pop(0)
+
+                rvec = np.mean(buffer,axis=0)"""
+                if marker_id in buffer.keys():
+                    buffer[marker_id].append(rvec)
+                    if len(buffer[marker_id])>2:
+                        buffer[marker_id].pop()
+                    rvec = np.mean(buffer[marker_id],axis=0)
+
+                else:
+                    buffer[marker_id]=[rvec]
+                rvecs.append(rvec)
+                tvecs.append(tvec)
+                distance = np.linalg.norm(tvec)
+                R, _ = cv2.Rodrigues(rvec)
+                from math import pi,atan2
+                # Extract Euler angles (roll, pitch, and yaw) from the rotation matrix (R)
+                yaw = atan2(R[1, 0], R[0, 0]) # Yaw angle
+                pitch = np.arctan2(-R[2, 0], np.sqrt(R[2, 1]**2 + R[2, 2]**2))  # Pitch angle
+                roll = np.arctan2(R[2, 1], R[2, 2])  # Roll angle
+                # Convert Euler angles from radians to degrees if needed
+                yaw_degrees = np.degrees(yaw)
+                pitch_degrees = np.degrees(pitch)
+                roll_degrees = np.degrees(roll)
+                angles=[yaw,pitch,roll]
+                
+                center_aruco_list.append(c)
+                distance_from_rgb_list.append(distance)
+                angle_aruco_list.append(angles)
+                width_aruco_list.append(width)
+                ids_list.append([marker_id])
+                tlist.append([marker_id,c,distance,angles,width,rvec])
+            else:
+                fids = np.delete(fids,i)
+
+        # Draw the detected markers with its IDs
+        fcorners = tuple(fcorners) 
+        markedImage = cv2.aruco.drawDetectedMarkers(image, fcorners,fids)
+      
+        for i in range(len(rvecs)):
+            rvec = rvecs[i]
+            tvec = tvecs[i]
+            markedImage = cv2.drawFrameAxes(markedImage,cam_mat,dist_mat,rvec,tvec,0.2)
+        #resized = cv2.resize(markedImage, (int(h*.5),int(w*.5)), interpolation = cv2.INTER_AREA)
+        
+    
  
     ############ ADD YOUR CODE HERE ############
 
@@ -146,13 +260,15 @@ def detect_aruco(image):
     #       ->  HINT: You may use 'cv2.drawFrameAxes'
 
     ############################################
+    
 
-    return center_aruco_list, distance_from_rgb_list, angle_aruco_list, width_aruco_list, ids
-
+    return tlist,width_aruco_list
+    
 
 ##################### CLASS DEFINITION #######################
 
 class aruco_tf(Node):
+    buffer={}
     '''
     ___CLASS___
 
@@ -197,7 +313,8 @@ class aruco_tf(Node):
 
         Returns:
         '''
-
+        self.depth_image =  self.bridge.imgmsg_to_cv2(data)
+        
         ############ ADD YOUR CODE HERE ############
 
         # INSTRUCTIONS & HELP : 
@@ -207,7 +324,6 @@ class aruco_tf(Node):
         #   ->  HINT: You may use CvBridge to do the same
 
         ############################################
-
 
     def colorimagecb(self, data):
         '''
@@ -219,6 +335,7 @@ class aruco_tf(Node):
 
         Returns:
         '''
+        self.cv_image = self.bridge.imgmsg_to_cv2(data)
 
         ############ ADD YOUR CODE HERE ############
 
@@ -232,6 +349,13 @@ class aruco_tf(Node):
 
         ############################################
 
+    def quaternion_multiply(self,quaternion1, quaternion0):
+        w0, x0, y0, z0 = quaternion0
+        w1, x1, y1, z1 = quaternion1
+        return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
 
     def process_image(self):
         '''
@@ -240,7 +364,8 @@ class aruco_tf(Node):
         Args:
         Returns:
         '''
-
+            
+        
         ############ Function VARIABLES ############
 
         # These are the variables defined from camera info topic such as image pixel size, focalX, focalY, etc.
@@ -253,8 +378,60 @@ class aruco_tf(Node):
         centerCamY = 360
         focalX = 931.1829833984375
         focalY = 931.1829833984375
-            
+        try:
+            tlist,width_aruco_list = detect_aruco(self.cv_image,aruco_tf.buffer)
+            if len(tlist)!=0 and (not tlist==None):
+                for j in range(len(tlist)):
+                    
+                    angle_aruco_z = tlist[j][3][0]
+                    quaternions = quaternion_from_euler(0,0,angle_aruco_z)
 
+                    cor = [0.0,-0.13012990734162724,0.0,0.9914969527009447]
+                    
+                    t = TransformStamped()
+                    t.header.stamp = self.get_clock().now().to_msg()
+                    t.header.frame_id = "camera_link"
+                    t.child_frame_id = f"2098_cam_{tlist[j][0]}"
+                    cX,cY = tlist[j][1]
+                    
+                    realsenseDepth = self.depth_image[cY][cX]/1000
+                    
+                    y = realsenseDepth * (sizeCamX - cX - centerCamX) / focalX 
+                    z = realsenseDepth * (sizeCamY - cY - centerCamY) / focalY
+                    x = realsenseDepth
+
+                    y_q = [.5,.5,.5,.5]
+                    
+                    quaternions = self.quaternion_multiply(y_q,quaternions)
+                    quaternions = self.quaternion_multiply(quaternions,cor)
+            
+                    t.transform.translation.x = x 
+                    t.transform.translation.y = y                                       
+                    t.transform.translation.z = z                
+                    t.transform.rotation.x = quaternions[0]
+                    t.transform.rotation.y = quaternions[1]
+                    t.transform.rotation.z = quaternions[2]
+                    t.transform.rotation.w = quaternions[3]
+                    
+                    self.br.sendTransform(t)
+                    tt = TransformStamped()
+                
+                    nt = self.tf_buffer.lookup_transform("base_link",f"2098_cam_{tlist[j][0]}",rclpy.time.Time(seconds=0),rclpy.duration.Duration(seconds=0))
+                    
+                    tt.header.stamp = self.get_clock().now().to_msg()
+                    tt.header.frame_id = "base_link"
+                    tt.transform.translation.x = nt.transform.translation.x 
+                    tt.transform.translation.y = nt.transform.translation.y                                      
+                    tt.transform.translation.z = nt.transform.translation.z            
+                    tt.transform.rotation.x = nt.transform.rotation.x
+                    tt.transform.rotation.y = nt.transform.rotation.y
+                    tt.transform.rotation.z = nt.transform.rotation.z
+                    tt.transform.rotation.w = nt.transform.rotation.w
+                    tt.child_frame_id = f"2098_base_{tlist[j][0]}"
+                    self.br.sendTransform(tt)
+                    
+        except Exception as error:
+            print(traceback.format_exc())
         ############ ADD YOUR CODE HERE ############
 
         # INSTRUCTIONS & HELP : 
@@ -315,9 +492,8 @@ def main():
 
     rclpy.init(args=sys.argv)                                       # initialisation
 
-    node = rclpy.create_node('aruco_tf_process')                    # creating ROS node
-
-    node.get_logger().info('Node created: Aruco tf process')        # logging information
+    node1 = rclpy.create_node('aruco_tf_process')                    # creating ROS node
+    node1.get_logger().info('Node created: Aruco tf process')        # logging information
 
     aruco_tf_class = aruco_tf()                                     # creating a new object for class 'aruco_tf'
 
@@ -329,11 +505,5 @@ def main():
 
 
 if __name__ == '__main__':
-    '''
-    Description:    If the python interpreter is running that module (the source file) as the main program, 
-                    it sets the special __name__ variable to have a value “__main__”. 
-                    If this file is being imported from another module, __name__ will be set to the module’s name.
-                    You can find more on this here -> https://www.geeksforgeeks.org/what-does-the-if-__name__-__main__-do/
-    '''
-
     main()
+
