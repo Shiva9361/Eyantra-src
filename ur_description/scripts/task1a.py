@@ -18,8 +18,8 @@
 *****************************************************************************************
 '''
 
-# Team ID:          [2098]
-# Author List:		[ D.Vishnu Aravind,S.Shivadarshan,Bhuvan D,Darun BS ]
+# Team ID:          [ Team-ID ]
+# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
 # Filename:		    task1a.py
 # Functions:
 #			        [ Comma separated list of functions in this file ]
