@@ -100,7 +100,7 @@ def calculate_rectangle_area(coordinates):
     return req
 
 
-def detect_aruco(image,buffer):
+def detect_aruco(image,buffer,val):
     '''
     Description:    Function to perform aruco detection and return each detail of aruco detected 
                     such as marker ID, distance, angle, width, center point location, etc.
@@ -146,7 +146,9 @@ def detect_aruco(image,buffer):
     
     # Convert the input BGR image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
+    gray = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,69,val)
+    cv2.imshow("h",gray)
+    cv2.waitKey(1000)
     # Define the ArUco dictionary
     aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
@@ -191,14 +193,7 @@ def detect_aruco(image,buffer):
                     buffer.pop(0)
 
                 rvec = np.mean(buffer,axis=0)"""
-                if marker_id in buffer.keys():
-                    buffer[marker_id].append(rvec)
-                    if len(buffer[marker_id])>2:
-                        buffer[marker_id].pop()
-                    rvec = np.mean(buffer[marker_id],axis=0)
-
-                else:
-                    buffer[marker_id]=[rvec]
+                
                 rvecs.append(rvec)
                 tvecs.append(tvec)
                 distance = np.linalg.norm(tvec)
@@ -268,7 +263,8 @@ def detect_aruco(image,buffer):
 ##################### CLASS DEFINITION #######################
 
 class aruco_tf(Node):
-    buffer={}
+    buffer=[]
+    cval = 1
     '''
     ___CLASS___
 
@@ -336,6 +332,7 @@ class aruco_tf(Node):
         Returns:
         '''
         self.cv_image = self.bridge.imgmsg_to_cv2(data)
+        #self.cv_image = cv2.blur(self.cv_image,(10,10))
 
         ############ ADD YOUR CODE HERE ############
 
@@ -378,12 +375,18 @@ class aruco_tf(Node):
         centerCamY = 360
         focalX = 931.1829833984375
         focalY = 931.1829833984375
+        aruco_tf.cval+=10
+        if aruco_tf.cval >100:
+            aruco_tf.cval=1
         try:
-            tlist,width_aruco_list = detect_aruco(self.cv_image,aruco_tf.buffer)
+            tlist,width_aruco_list = detect_aruco(self.cv_image,aruco_tf.buffer,aruco_tf.cval)
             if len(tlist)!=0 and (not tlist==None):
-                for j in range(len(tlist)):
+                for i in tlist:
+                    if i != any(aruco_tf.buffer):
+                        aruco_tf.buffer.append(i)
+                for j in aruco_tf.buffer:
                     
-                    angle_aruco_z = tlist[j][3][0]
+                    angle_aruco_z = j[3][0]
                     quaternions = quaternion_from_euler(0,0,angle_aruco_z)
 
                     cor = [0.0,-0.13012990734162724,0.0,0.9914969527009447]
@@ -391,8 +394,8 @@ class aruco_tf(Node):
                     t = TransformStamped()
                     t.header.stamp = self.get_clock().now().to_msg()
                     t.header.frame_id = "camera_link"
-                    t.child_frame_id = f"2098_cam_{tlist[j][0]}"
-                    cX,cY = tlist[j][1]
+                    t.child_frame_id = f"2098_cam_{j[0]}"
+                    cX,cY = j[1]
                     
                     realsenseDepth = self.depth_image[cY][cX]/1000
                     
@@ -416,7 +419,7 @@ class aruco_tf(Node):
                     self.br.sendTransform(t)
                     tt = TransformStamped()
                 
-                    nt = self.tf_buffer.lookup_transform("base_link",f"2098_cam_{tlist[j][0]}",rclpy.time.Time(seconds=0),rclpy.duration.Duration(seconds=0))
+                    nt = self.tf_buffer.lookup_transform("base_link",f"2098_cam_{j[0]}",rclpy.time.Time(seconds=0),rclpy.duration.Duration(seconds=0))
                     
                     tt.header.stamp = self.get_clock().now().to_msg()
                     tt.header.frame_id = "base_link"
@@ -427,7 +430,7 @@ class aruco_tf(Node):
                     tt.transform.rotation.y = nt.transform.rotation.y
                     tt.transform.rotation.z = nt.transform.rotation.z
                     tt.transform.rotation.w = nt.transform.rotation.w
-                    tt.child_frame_id = f"2098_base_{tlist[j][0]}"
+                    tt.child_frame_id = f"2098_base_{j[0]}"
                     self.br.sendTransform(tt)
                     
         except Exception as error:
