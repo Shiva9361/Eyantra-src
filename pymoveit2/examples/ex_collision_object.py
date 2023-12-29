@@ -21,7 +21,7 @@ DEFAULT_EXAMPLE_MESH = path.join(
     path.dirname(path.realpath(__file__)), "assets", "suzanne.stl"
 )
 
-
+print(DEFAULT_EXAMPLE_MESH)
 def main():
     rclpy.init()
 
@@ -31,14 +31,18 @@ def main():
     # Declare parameter for joint positions
     node.declare_parameter(
         "filepath",
-        "",
+        r"/home/shiva/colcon_ws/src/eyantra_warehouse/models/rack/meshes/rack.stl",
     )
     node.declare_parameter(
         "action",
         "add",
     )
-    node.declare_parameter("position", [0.5, 0.0, 0.5])
-    node.declare_parameter("quat_xyzw", [0.0, 0.0, -0.707, 0.707])
+    node.declare_parameter("position1", [1.050001, -2.455000, 0.05])
+    node.declare_parameter("quat_xyzw1", [0.0, 0.0, 0.9999997, 0.0007963])
+    node.declare_parameter("position2", [1.350000, -3.155000, 0.05])
+    node.declare_parameter("quat_xyzw2", [0.0, 0.0, -0.7068252, 0.7073883])
+    node.declare_parameter("position3", [1.350000, -1.755001, 0.05])
+    node.declare_parameter("quat_xyzw3", [0.0, 0.0, 0.7068248, 0.7073886])
 
     # Create callback group that allows execution of callbacks in parallel without restrictions
     callback_group = ReentrantCallbackGroup()
@@ -60,38 +64,39 @@ def main():
     executor_thread.start()
 
     # Get parameters
-    filepath = node.get_parameter("filepath").get_parameter_value().string_value
-    action = node.get_parameter("action").get_parameter_value().string_value
-    position = node.get_parameter("position").get_parameter_value().double_array_value
-    quat_xyzw = node.get_parameter("quat_xyzw").get_parameter_value().double_array_value
+    for i in range(1,4):
+        filepath = node.get_parameter("filepath").get_parameter_value().string_value
+        action = node.get_parameter("action").get_parameter_value().string_value
+        position = node.get_parameter(f"position{i}").get_parameter_value().double_array_value
+        quat_xyzw = node.get_parameter(f"quat_xyzw{i}").get_parameter_value().double_array_value
 
-    # Use the default example mesh if invalid
-    if not filepath:
-        node.get_logger().info(f"Using the default example mesh file")
-        filepath = DEFAULT_EXAMPLE_MESH
+        # Use the default example mesh if invalid
+        if not filepath:
+            node.get_logger().info(f"Using the default example mesh file")
+            filepath = DEFAULT_EXAMPLE_MESH
 
-    # Make sure the mesh file exists
-    if not path.exists(filepath):
-        node.get_logger().error(f"File '{filepath}' does not exist")
-        rclpy.shutdown()
-        exit(1)
+        # Make sure the mesh file exists
+        if not path.exists(filepath):
+            node.get_logger().error(f"File '{filepath}' does not exist")
+            rclpy.shutdown()
+            exit(1)
 
-    # Determine ID of the collision mesh
-    mesh_id = path.basename(filepath).split(".")[0]
+        # Determine ID of the collision mesh
+        mesh_id = path.basename(filepath).split(".")[0]
 
-    if "add" == action:
-        # Add collision mesh
-        node.get_logger().info(
-            f"Adding collision mesh '{filepath}' {{position: {list(position)}, quat_xyzw: {list(quat_xyzw)}}}"
-        )
-        # print(ur5.base_link_name())
-        moveit2.add_collision_mesh(
-            filepath=filepath, id=mesh_id, position=position, quat_xyzw=quat_xyzw, frame_id=ur5.base_link_name()
-        )
-    else:
-        # Remove collision mesh
-        node.get_logger().info(f"Removing collision mesh with ID '{mesh_id}'")
-        moveit2.remove_collision_mesh(id=mesh_id)
+        if "add" == action:
+            # Add collision mesh
+            node.get_logger().info(
+                f"Adding collision mesh '{filepath}' {{position: {list(position)}, quat_xyzw: {list(quat_xyzw)}}}"
+            )
+            # print(ur5.base_link_name())
+            moveit2.add_collision_mesh(
+                filepath=filepath, id=mesh_id, position=position, quat_xyzw=quat_xyzw, frame_id=ur5.base_link_name()
+            )
+        else:
+            # Remove collision mesh
+            node.get_logger().info(f"Removing collision mesh with ID '{mesh_id}'")
+            moveit2.remove_collision_mesh(id=mesh_id)
 
     rclpy.shutdown()
     exit(0)

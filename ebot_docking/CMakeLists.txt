@@ -55,6 +55,8 @@ install(
 
 install(PROGRAMS
 	scripts/ebot_docking_boilerplate.py
+	scripts/ebot_docking_rack1.py
+	scripts/rack1_predock.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

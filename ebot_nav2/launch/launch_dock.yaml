@@ -1,0 +1,10 @@
+launch:
+  - node:
+      pkg: "ebot_docking"
+      exec: "ebot_docking_rack1.py"
+      name: "rack_1_dock"
+
+  - node:
+      pkg: "ebot_docking"
+      exec: "rack1_predock.py"
+      name: "rack_1_predock"

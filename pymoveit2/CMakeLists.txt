@@ -22,6 +22,10 @@ install(
   DIRECTORY examples/assets
   DESTINATION lib/${PROJECT_NAME}
 )
+install(PROGRAMS
+	scripts/task4b_arm.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 # Setup the project
 ament_package()
