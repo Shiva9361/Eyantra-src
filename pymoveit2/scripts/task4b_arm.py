@@ -101,7 +101,7 @@ class TFListenerNode(Node):
         req.link2_name  = 'wrist_3_link'  
 
         self.gripper_control2.call_async(req)
-    def mode_change(self):
+    def movit_on(self):
         switchParam = SwitchController.Request()
         switchParam.activate_controllers = ["scaled_joint_trajectory_controller"] # for normal use of moveit
         switchParam.deactivate_controllers = ["forward_position_controller"] # for servoing
@@ -114,6 +114,18 @@ class TFListenerNode(Node):
         self.__contolMSwitch.call_async(switchParam)
         self.get_logger().info("[CM]: Switching Complete")
 
+    def servo_on(self):
+        switchParam = SwitchController.Request()
+        switchParam.deactivate_controllers = ["scaled_joint_trajectory_controller"] # for normal use of moveit
+        switchParam.activate_controllers = ["forward_position_controller"] # for servoing
+        switchParam.strictness = 2
+        switchParam.start_asap = False
+
+        # calling control manager service after checking its availability
+        while not self.__contolMSwitch.wait_for_service(timeout_sec=5.0):
+            self.get_logger().warn(f"Service control Manager is not yet available...")
+        self.__contolMSwitch.call_async(switchParam)
+        self.get_logger().info("[CM]: Switching Complete")
 
     def move_to_tf_pose(self, target_frame):
         if target_frame not in self.visited_frames:

@@ -101,7 +101,7 @@ class TFListenerNode(Node):
         req.link2_name  = 'wrist_3_link'  
 
         self.gripper_control2.call_async(req)
-    def mode_change(self):
+    def movit_on(self):
         switchParam = SwitchController.Request()
         switchParam.activate_controllers = ["scaled_joint_trajectory_controller"] # for normal use of moveit
         switchParam.deactivate_controllers = ["forward_position_controller"] # for servoing
@@ -113,6 +113,13 @@ class TFListenerNode(Node):
             self.get_logger().warn(f"Service control Manager is not yet available...")
         self.__contolMSwitch.call_async(switchParam)
         self.get_logger().info("[CM]: Switching Complete")
+
+    def servo_on(self):
+        switchParam = SwitchController.Request()
+        switchParam.deactivate_controllers = ["scaled_joint_trajectory_controller"] # for normal use of moveit
+        switchParam.activate_controllers = ["forward_position_controller"] # for servoing
+        switchParam.strictness = 2
+        switchParam.start_asap = False
 
 
     def move_to_tf_pose(self, target_frame):
@@ -140,13 +147,14 @@ class TFListenerNode(Node):
                 """ee_t = self.tf_buffer.lookup_transform(
                     'base_link', 'ee_link', rclpy.time.Time(), rclpy.duration.Duration(seconds=1)
                 )"""
-                
+                self.movit_on()
                 #z_servo_dis = abs(ee_t.transform.translation.z-transform.transform.translation.z)
                 position = [pre_transform.transform.translation.x, pre_transform.transform.translation.y, pre_transform.transform.translation.z]
                 orientation = [pre_transform.transform.rotation.x, pre_transform.transform.rotation.y,
                                pre_transform.transform.rotation.z, pre_transform.transform.rotation.w]
                 self.get_logger().info(f"Moving to position: {position}, orientation: {orientation}")
                 
+                self.servo_on()
                 self.moveit2.move_to_pose(position=position, quat_xyzw=orientation)
                 self.moveit2.wait_until_executed() 
 
@@ -202,7 +210,7 @@ class TFListenerNode(Node):
 
                 objc = "box"+target_frame.split("_")[-1]
                 self.attach(objc)
-
+                self.movit_on()
                 position = [pre_transform.transform.translation.x, pre_transform.transform.translation.y, pre_transform.transform.translation.z]
                 orientation = [pre_transform.transform.rotation.x, pre_transform.transform.rotation.y,
                                pre_transform.transform.rotation.z, pre_transform.transform.rotation.w]
